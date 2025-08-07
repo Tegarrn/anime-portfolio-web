@@ -3,19 +3,106 @@ import Layout from '../layouts/Layout.astro';
 ---
 
 <Layout>
-  <main>
-    <h1>VRoid AI Portfolio</h1>
-    
-    <div id="canvas-container" style="width: 600px; height: 800px; border: 1px solid black;">
-        </div>
+  <div class="app-container">
+    <div id="canvas-container">
+      </div>
 
-    <form id="chat-form" style="margin-top: 20px;">
-      <input type="text" id="prompt-input" placeholder="Ketik sesuatu..." size="50" />
-      <button type="submit">Kirim</button>
-    </form>
-    
-  </main>
+    <div class="ui-container">
+      <h1>VRoid AI Portfolio</h1>
+      <p>Tanya apa saja pada karakter ini!</p>
+      <form id="chat-form">
+        <input type="text" id="prompt-input" placeholder="Ketik di sini..." required />
+        <button type="submit">Kirim</button>
+      </form>
+    </div>
+  </div>
 
   <script src="../scripts/vrm-loader.ts"></script>
   <script src="../scripts/api-client.ts"></script>
 </Layout>
+
+<style>
+  :root {
+    --bg-color: #1a1a2e;
+    --card-color: #16213e;
+    --primary-color: #0f3460;
+    --secondary-color: #e94560;
+    --text-color: #dcdcdc;
+  }
+
+  .app-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100vh;
+    background: linear-gradient(135deg, var(--bg-color), var(--primary-color));
+    color: var(--text-color);
+    font-family: sans-serif;
+  }
+
+  #canvas-container {
+    width: 90vw;
+    max-width: 500px;
+    height: 60vh;
+    max-height: 600px;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    cursor: grab;
+  }
+  #canvas-container:active {
+    cursor: grabbing;
+  }
+
+  .ui-container {
+    margin-top: 24px;
+    padding: 20px;
+    background-color: var(--card-color);
+    border-radius: 16px;
+    text-align: center;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    width: 90vw;
+    max-width: 500px;
+  }
+
+  .ui-container h1 {
+    margin: 0 0 8px 0;
+    color: var(--secondary-color);
+  }
+
+  .ui-container p {
+    margin: 0 0 16px 0;
+    opacity: 0.8;
+  }
+
+  #chat-form {
+    display: flex;
+    gap: 8px;
+  }
+
+  #prompt-input {
+    flex-grow: 1;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--primary-color);
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-size: 16px;
+  }
+
+  button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    background-color: var(--secondary-color);
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  button:hover {
+    background-color: #ff5c77;
+  }
+</style>
