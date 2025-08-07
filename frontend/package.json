@@ -12,5 +12,8 @@
     "@pixiv/three-vrm": "^3.4.2",
     "astro": "^5.12.8",
     "three": "^0.179.1"
+  },
+  "devDependencies": {
+    "@types/three": "^0.179.0"
   }
 }
