@@ -9,6 +9,8 @@
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^5.12.8"
+    "@pixiv/three-vrm": "^3.4.2",
+    "astro": "^5.12.8",
+    "three": "^0.179.1"
   }
 }
