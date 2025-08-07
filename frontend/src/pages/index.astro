@@ -5,11 +5,17 @@ import Layout from '../layouts/Layout.astro';
 <Layout>
   <main>
     <h1>VRoid AI Portfolio</h1>
-    <p>Model 3D akan muncul di sini.</p>
     
     <div id="canvas-container" style="width: 600px; height: 800px; border: 1px solid black;">
         </div>
 
+    <form id="chat-form" style="margin-top: 20px;">
+      <input type="text" id="prompt-input" placeholder="Ketik sesuatu..." size="50" />
+      <button type="submit">Kirim</button>
+    </form>
+    
   </main>
-   <script src="../scripts/vrm-loader.ts"></script>
+
+  <script src="../scripts/vrm-loader.ts"></script>
+  <script src="../scripts/api-client.ts"></script>
 </Layout>
