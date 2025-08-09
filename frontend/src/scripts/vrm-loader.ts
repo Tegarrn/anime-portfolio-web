@@ -1,100 +1,114 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { VRM, VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
+import { VRM, VRMExpressionPresetName, VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
 
-// --- Variabel Global ---
 let currentVrm: VRM | null = null;
 const clock = new THREE.Clock();
+let animationState: 'idle' | 'talking' = 'idle';
 
-// Dapatkan container dari halaman HTML
+// Interval untuk kedipan mata
+let blinkInterval: ReturnType<typeof setInterval> | null = null;
+
 const container = document.getElementById('canvas-container');
-if (!container) {
-    throw new Error("Container #canvas-container tidak ditemukan");
-}
+if (!container) throw new Error("Container #canvas-container tidak ditemukan");
 
-// 1. Scene
 const scene = new THREE.Scene();
-
-// 2. Kamera
 const camera = new THREE.PerspectiveCamera(30, container.clientWidth / container.clientHeight, 0.1, 20);
-camera.position.set(0, 1.2, 1.2); // Posisikan kamera sedikit lebih jauh
+camera.position.set(0, 1.2, 1.5);
 
-// 3. Renderer
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(container.clientWidth, container.clientHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
 container.appendChild(renderer.domElement);
 
-// --- Kontrol Kamera (OrbitControls) ---
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true; // Membuat gerakan lebih halus
-controls.target.set(0, 1.0, 0); // Arahkan target kamera ke bagian tengah tubuh model
-controls.update();
+controls.enableDamping = true;
+controls.target.set(0, 1.0, 0);
 
-// 4. Pencahayaan (dibuat lebih baik)
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-scene.add(ambientLight);
-const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-directionalLight.position.set(0.5, 1.0, 1.0).normalize();
-scene.add(directionalLight);
+const light = new THREE.DirectionalLight(0xffffff, Math.PI);
+light.position.set(1, 1, 1).normalize();
+scene.add(light);
+scene.add(new THREE.AmbientLight(0xffffff, Math.PI * 0.3));
 
-// 5. Loader
+
 const loader = new GLTFLoader();
 loader.register((parser) => new VRMLoaderPlugin(parser));
 
-// Muat model VRM
-loader.load(
-    '/character.vrm',
-    (gltf) => {
-        const vrm = gltf.userData.vrm as VRM;
-        scene.add(vrm.scene);
-        currentVrm = vrm;
-
-        // Putar model agar menghadap ke depan
-        VRMUtils.rotateVRM0(vrm);
-
-        console.log('Model VRM berhasil dimuat:', vrm);
-    },
-    (progress) => console.log('Loading model...', 100.0 * (progress.loaded / progress.total), '%'),
-    (error) => console.error('Gagal memuat model:', error)
+loader.load('/character.vrm', (gltf) => {
+    const vrm = gltf.userData.vrm as VRM;
+    VRMUtils.removeUnnecessaryJoints(gltf.scene);
+    VRMUtils.rotateVRM0(vrm);
+    scene.add(vrm.scene);
+    currentVrm = vrm;
+    console.log("Model dimuat & pose diperbaiki.");
+    startBlinking(); // Mulai kedipan mata setelah model dimuat
+},
+(progress) => console.log('Loading...', progress.loaded / progress.total * 100, '%'),
+(error) => console.error(error)
 );
 
-// Fungsi untuk animasi
 function animate() {
     requestAnimationFrame(animate);
     const deltaTime = clock.getDelta();
 
-    // Jika model sudah dimuat, jalankan animasi idle
     if (currentVrm) {
-        // --- Animasi Idle Sederhana ---
-        // Dapatkan tulang dada (chest)
-        const chest = currentVrm.humanoid.getNormalizedBoneNode('chest');
-        if (chest) {
-            // Buat gerakan bergoyang halus menggunakan sinus
-            const elapsedTime = clock.getElapsedTime();
-            const sway = Math.sin(elapsedTime * 0.7) * 0.02; // Goyangan kecil
-            const breath = Math.sin(elapsedTime * 1.0) * 0.005; // Gerakan napas
-            
-            chest.rotation.y = sway;
-            chest.position.y = 1.05 + breath; // Sesuaikan '1.05' jika posisi awal dada berbeda
-        }
-        
-        currentVrm.update(deltaTime); // Update VRM
-    }
+        currentVrm.update(deltaTime); // Update internal VRM (termasuk ekspresi)
 
-    controls.update(); // Update kontrol kamera
+        const upperChest = currentVrm.humanoid.getNormalizedBoneNode('upperChest');
+        const elapsedTime = clock.getElapsedTime();
+        
+        if (upperChest) {
+            if (animationState === 'idle') {
+                const sway = Math.sin(elapsedTime * 0.7) * 0.015;
+                upperChest.rotation.z = sway;
+            } else if (animationState === 'talking') {
+                const sway = Math.sin(elapsedTime * 2.5) * 0.03;
+                upperChest.rotation.z = sway;
+            }
+        }
+    }
+    
+    controls.update();
     renderer.render(scene, camera);
 }
-
-// Mulai animasi
 animate();
 
-// Handle window resize
-window.addEventListener('resize', () => {
-    if (container) {
-        camera.aspect = container.clientWidth / container.clientHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(container.clientWidth, container.clientHeight);
+// --- Fungsi Kedipan Mata yang Diperbaiki ---
+function blink() {
+    if (!currentVrm?.expressionManager) return;
+    
+    // Set ekspresi "blink" menjadi penuh (mata tertutup)
+    currentVrm.expressionManager.setValue(VRMExpressionPresetName.Blink, 1.0);
+    
+    // Setelah 100ms, kembalikan ke 0 (mata terbuka)
+    setTimeout(() => {
+        if (currentVrm?.expressionManager) {
+            currentVrm.expressionManager.setValue(VRMExpressionPresetName.Blink, 0.0);
+        }
+    }, 100);
+}
+
+function startBlinking() {
+    if (blinkInterval) clearInterval(blinkInterval);
+    // Jalankan fungsi blink setiap 2-5 detik secara acak
+    blinkInterval = setInterval(blink, 2000 + Math.random() * 3000);
+}
+
+function stopBlinking() {
+    if (blinkInterval) {
+        clearInterval(blinkInterval);
+        blinkInterval = null;
     }
-});
+}
+
+// Fungsi yang diekspor untuk dikontrol oleh api-client.ts
+export function startTalking() {
+    animationState = 'talking';
+    stopBlinking(); // Hentikan kedipan otomatis saat berbicara
+}
+
+export function stopTalking() {
+    animationState = 'idle';
+    startBlinking(); // Mulai lagi kedipan otomatis setelah selesai
+}

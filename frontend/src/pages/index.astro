@@ -16,10 +16,13 @@ import Layout from '../layouts/Layout.astro';
       </form>
     </div>
   </div>
-
-  <script src="../scripts/vrm-loader.ts"></script>
-  <script src="../scripts/api-client.ts"></script>
 </Layout>
+
+<script>
+  // Cara yang benar untuk memuat module di Astro
+  import '../scripts/vrm-loader.ts';
+  import '../scripts/api-client.ts';
+</script>
 
 <style>
   :root {
@@ -29,7 +32,6 @@ import Layout from '../layouts/Layout.astro';
     --secondary-color: #e94560;
     --text-color: #dcdcdc;
   }
-
   .app-container {
     display: flex;
     flex-direction: column;
@@ -41,7 +43,6 @@ import Layout from '../layouts/Layout.astro';
     color: var(--text-color);
     font-family: sans-serif;
   }
-
   #canvas-container {
     width: 90vw;
     max-width: 500px;
@@ -54,7 +55,6 @@ import Layout from '../layouts/Layout.astro';
   #canvas-container:active {
     cursor: grabbing;
   }
-
   .ui-container {
     margin-top: 24px;
     padding: 20px;
@@ -65,22 +65,18 @@ import Layout from '../layouts/Layout.astro';
     width: 90vw;
     max-width: 500px;
   }
-
   .ui-container h1 {
     margin: 0 0 8px 0;
     color: var(--secondary-color);
   }
-
   .ui-container p {
     margin: 0 0 16px 0;
     opacity: 0.8;
   }
-
   #chat-form {
     display: flex;
     gap: 8px;
   }
-
   #prompt-input {
     flex-grow: 1;
     padding: 10px;
@@ -90,7 +86,6 @@ import Layout from '../layouts/Layout.astro';
     color: var(--text-color);
     font-size: 16px;
   }
-
   button {
     padding: 10px 20px;
     border: none;
@@ -101,7 +96,6 @@ import Layout from '../layouts/Layout.astro';
     cursor: pointer;
     transition: background-color 0.2s;
   }
-
   button:hover {
     background-color: #ff5c77;
   }
